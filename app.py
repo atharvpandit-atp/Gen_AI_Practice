@@ -66,5 +66,32 @@ def task_b_prompt_swap():
         )
         print(f"\n[{name} Out]: {res.choices[0].message.content.strip()}")
 
+#TASK C & D: Multi-Turn Memory Loop(Snowball Tracking)
+def task_c_d_memory_loop(simulate_break=False):
+    banner = "C & D - Broken Memory Simulation" if simulate_break else "C & D - Multi-Turn Memory Loop"
+    print_banner(banner)
+
+    messages = [{"role": "system", "content": "You are a helpful tracking assistant"}]
+    conversation_turns = [
+        "What is the capital ofFrance?",
+        "What is the estimated population of that city?"
+    ]
+
+    for i, user_text in enumerate(conversation_turns, 1):
+        print(f"\n--- Turn {i}: User says -> '{user_text}' ---")
+        messages.append({"role": "user", "content": user_text})
+        
+        res = client.chat.completions.create(model=MODEL_NAME, messages=messages)
+        reply = res.choices[0].message.content
+        usage = res.usage
+        
+        print(f"AI Response: {reply}")
+        print(f"[Snowball Monitor] Total Input Tokens Passed: {usage.prompt_tokens}")
+        
+        if simulate_break:
+            print("⚠️ [Simulation] Intentionally skipped appending assistant reply to local list context...")
+            continue
+        else:
+            messages.append({"role": "assistant", "content": reply})
 
     
