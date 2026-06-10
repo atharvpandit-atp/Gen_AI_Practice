@@ -44,4 +44,27 @@ def task_a_first_call():
     print(f"Finish Reason: {finish_reason}")
     print(f"Token Metadata -> Input: {usage.prompt_tokens} | Output: {usage.completion_tokens}")
 
+#TASK B: System-Prompt Swap
+def task_b_prompt_swap():
+    print_banner("B - System-Prompt Control")
 
+    prompts = {
+        "Pirate Persona": "You are a seafaring 17th-century pirate captain.",
+        "JSON Enforcer": "You are an API. Reply exclusively in JSON format like: {\"answer\": \"your text here\"}"
+    }
+
+    user_query = "What is the color of the sky on a clear afternoon?"
+
+    for name, system_content in prompts.items():
+        res = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": user_query}
+            ],
+            temperature=0.3
+        )
+        print(f"\n[{name} Out]: {res.choices[0].message.content.strip()}")
+
+
+    
