@@ -1,0 +1,50 @@
+name: CI/CD Pipeline Build and Deploy
+
+on:
+  push:
+    branches: [ "main" ] # Triggers the pipeline when code pushes to main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/llm-playground:latest
+
+  deploy-to-ec2:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy application via remote SSH commands
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          # Stop any old containers running on port 8501
+          docker stop llm-app || true
+          docker rm llm-app || true
+          
+          # Pull down the brand new image from Docker Hub
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/llm-playground:latest
+          
+          # Run the new container with injected environment token secrets
+          docker run -d \
+            -p 8501:8501 \
+            --name llm-app \
+            -e GIT_TOKEN="${{ secrets.GIT_TOKEN_SECRET }}" \
+            ${{ secrets.DOCKERHUB_USERNAME }}/llm-playground:latest
