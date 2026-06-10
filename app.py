@@ -94,4 +94,23 @@ def task_c_d_memory_loop(simulate_break=False):
         else:
             messages.append({"role": "assistant", "content": reply})
 
-    
+#TASK E: Streaming
+def task_e_streaming():
+    print_banner("E - Streaming Token Chunks (Low Latency UI)")
+
+    print("Streaming Token: ", end="", flush=True)
+
+    stream = client.chat.completions.create(
+        model = MODEL_NAME
+        messages[{"role": "user", "content": "Explain tokenization in exactly two sentences."}],
+        stream=True
+    )
+
+    for chunks in stream:
+        token = chunks.choices[0].delta.content
+        if token:
+            print(token, end="", flush=True)
+    print("\n\nStream Finished.")
+
+ 
+
